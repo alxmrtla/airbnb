@@ -4,8 +4,9 @@ require('express-async-errors');
 const cookieParser = require('cookie-parser');
 const csrf = require('csurf');
 const routes = require('./routes');
+const sessionRouter = require('./routes/api/session');
 const app = express();
-
+const usersRouter = require('./routes/api/users');
 require('dotenv').config();
 const morgan = require('morgan');
 const cors = require('cors');
@@ -15,10 +16,13 @@ const isProduction = environment === 'production';
 const csrfProtection = csrf({ cookie: true });
 const { ValidationError } = require('sequelize');
 
+
 // Middleware setup
 app.use(express.json()); // Built-in middleware to parse JSON bodies
 app.use(cookieParser());
 app.use(morgan("dev")); // Logging middleware
+app.use('/api/session', sessionRouter);
+app.use('/api/users', usersRouter);
 
 // Security middleware setup
 app.use(csrfProtection);
@@ -59,7 +63,7 @@ app.use((err, _req, res, _next) => {
   });
 
 
-
+//n7qUMqMo-Zm0M5cCJEghpm5tb06jJt5_S3ls
 
 
 module.exports = app;

@@ -1,3 +1,4 @@
+// backend/db/models/index.js
 'use strict';
 
 const fs = require('fs');
@@ -36,6 +37,11 @@ Object.keys(db).forEach(modelName => {
     db[modelName].associate(db);
   }
 });
+
+
+
+
+
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
