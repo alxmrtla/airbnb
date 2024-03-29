@@ -1,47 +1,30 @@
-const express = require("express");
-require("express-async-errors");
-require("dotenv").config();
-
-const morgan = require("morgan");
-const cors = require("cors");
-const csurf = require("csurf");
-const helmet = require("helmet");
-const cookieParser = require("cookie-parser");
-
+//backend/app.js
+const express = require('express');
+require('express-async-errors');
+const cookieParser = require('cookie-parser');
+const csrf = require('csurf');
+const routes = require('./routes');
 const app = express();
 
+require('dotenv').config();
+const morgan = require('morgan');
+const cors = require('cors');
+const helmet = require('helmet');
+const { environment } = require('./config');
+const isProduction = environment === 'production';
+const csrfProtection = csrf({ cookie: true });
+
 // Middleware setup
-app.use(morgan("dev")); // Logging middleware
-app.use(cookieParser());
 app.use(express.json()); // Built-in middleware to parse JSON bodies
+app.use(cookieParser());
+app.use(morgan("dev")); // Logging middleware
 
 // Security middleware setup
-if (process.env.NODE_ENV !== "production") {
-  app.use(cors()); // Enable CORS if in development mode for React frontend
-}
-app.use(
-  helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" }, // Configure Helmet for security
-  })
-);
-app.use(
-  csurf({
-    cookie: {
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "Lax" : false,
-      httpOnly: true,
-    },
-  })
-);
+app.use(csrfProtection);
+app.use(routes);
 
-// Test route
-app.get("/hello/world", function (req, res) {
-  res.cookie("XSRF-TOKEN", req.csrfToken());
-  res.send("Hello World!");
-});
-// Start the server
-const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+
+
 
 
 module.exports = app;

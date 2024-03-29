@@ -24,12 +24,12 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{url}}/csrf/restore",
+					"raw": "{{url}}/csurf/restore",
 					"host": [
 						"{{url}}"
 					],
 					"path": [
-						"csrf",
+						"csurf",
 						"restore"
 					]
 				}
