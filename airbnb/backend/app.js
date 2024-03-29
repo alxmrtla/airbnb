@@ -15,7 +15,7 @@ const { environment } = require('./config');
 const isProduction = environment === 'production';
 const csrfProtection = csrf({ cookie: true });
 const { ValidationError } = require('sequelize');
-
+const apiRouter = require('./routes/api');
 
 // Middleware setup
 app.use(express.json()); // Built-in middleware to parse JSON bodies
@@ -62,7 +62,7 @@ app.use((err, _req, res, _next) => {
     });
   });
 
-
+  app.use('/api', apiRouter);
 //n7qUMqMo-Zm0M5cCJEghpm5tb06jJt5_S3ls
 
 

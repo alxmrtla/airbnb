@@ -8,3 +8,4 @@ module.exports = {
     expiresIn: process.env.JWT_EXPIRES_IN,
   },
 };
+//XSRF-Token":"mHPXEr5A-Q1FaXb5Y0SRcvte9dhZlXr_GL6Q

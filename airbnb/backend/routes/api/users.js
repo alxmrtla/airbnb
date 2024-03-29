@@ -1,9 +1,11 @@
 // backend/routes/api/users.js
+
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const { User } = require('../../db/models');
-const { setTokenCookie } = require('../../utils/auth');
+const { setTokenCookie, requireAuth } = require('../../utils/auth');
+
 
 // POST /api/users - Register a new user
 router.post('/', async (req, res, next) => {
