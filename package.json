@@ -14,7 +14,7 @@
   "sequelize": "npm run --prefix airbnb/backend sequelize",
   "sequelize-cli": "npm run --prefix airbnb/backend sequelize-cli",
   "start": "npm start --prefix airbnb/backend",
-  "build": "npm run --prefix backend build",
+  "build": "npm run --prefix airbnb/backend build",
   "devDependencies": {
     "sequelize-cli": "^6.6.2"
   },
