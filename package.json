@@ -14,5 +14,11 @@
   "sequelize": "npm run --prefix backend sequelize",
   "sequelize-cli": "npm run --prefix backend sequelize-cli",
   "start": "npm start --prefix backend",
-  "build": "echo \"No build step required\""
+  "build": "echo \"No build step required\"",
+  "devDependencies": {
+    "sequelize-cli": "^6.6.2"
+  },
+  "engines": {
+    "node": "18.19.1"
+  }
 }
