@@ -9,11 +9,11 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "install": "npm --prefix backend install backend",
-  "dev:backend": "npm install --prefix backend && npm start --prefix backend",
-  "sequelize": "npm run --prefix backend sequelize",
-  "sequelize-cli": "npm run --prefix backend sequelize-cli",
-  "start": "npm start --prefix backend",
+  "install": "npm --prefix airbnb/backend install backend",
+  "dev:backend": "npm install --prefix airbnb/backend && npm start --prefix airbnb/backend",
+  "sequelize": "npm run --prefix airbnb/backend sequelize",
+  "sequelize-cli": "npm run --prefix airbnb/backend sequelize-cli",
+  "start": "npm start --prefix airbnb/backend",
   "build": "echo 'No build process required.'",
   "devDependencies": {
     "sequelize-cli": "^6.6.2"
