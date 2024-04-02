@@ -1,6 +1,16 @@
 'use strict';
+
 module.exports = {
   up: async (queryInterface, Sequelize) => {
+    // Check if the table already exists
+    const tableMeta = await queryInterface.describeTable('Users').catch(() => null);
+    if (tableMeta) {
+
+      console.log('Users table already exists, skipping creation.');
+      return;
+    }
+
+    // If table doesn't exist, create it
     await queryInterface.createTable('Users', {
       id: {
         allowNull: false,
@@ -22,6 +32,14 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false
       },
+      firstName: {
+        type: Sequelize.STRING,
+        allowNull: false
+      },
+      lastName: {
+        type: Sequelize.STRING,
+        allowNull: false
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
@@ -34,6 +52,7 @@ module.exports = {
       }
     });
   },
+
   down: async (queryInterface, Sequelize) => {
     await queryInterface.dropTable('Users');
   }
