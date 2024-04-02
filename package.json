@@ -18,7 +18,4 @@
   "devDependencies": {
     "sequelize-cli": "^6.6.2"
   }
-  // "engines": {
-  //   "node": "18.19.1"
-  // }
 }
