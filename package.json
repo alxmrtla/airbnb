@@ -20,8 +20,4 @@
   "engines": {
     "node": "18.19.1"
   }
-  ,
-  "dependencies": {
-    "express-validator": "^7.0.1"
-  }
 }
