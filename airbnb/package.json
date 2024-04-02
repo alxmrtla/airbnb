@@ -21,6 +21,6 @@
     "node": "18.19.1"
   },
   "dependencies": {
-    "express-validator": "^6.12.1"
+    "express-validator": "^7.0.1"
   }
 }
