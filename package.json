@@ -3,16 +3,17 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
+
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "install": "npm --prefix airbnb/backend install backend",
-  "dev:backend": "npm install --prefix airbnb/backend && npm start --prefix ./airbnb/backend",
-  "sequelize": "npm run --prefix airbnb/backend sequelize",
-  "sequelize-cli": "npm run --prefix airbnb/backend sequelize-cli",
-  "start": "npm start --prefix airbnb/backend",
-  "build": "npm run --prefix airbnb/backend build"
+  "scripts": {
+  "install": "npm --prefix backend install backend",
+  "dev:backend": "npm install --prefix backend && npm start --prefix backend",
+  "sequelize": "npm run --prefix backend sequelize",
+  "sequelize-cli": "npm run --prefix backend sequelize-cli",
+  "start": "npm start --prefix backend",
+  "build": "npm run --prefix backend build"
   },
   "devDependencies": {
     "sequelize-cli": "^6.6.2"
