@@ -4,8 +4,6 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -14,7 +12,8 @@
   "sequelize": "npm run --prefix ./airbnb/backend sequelize",
   "sequelize-cli": "npm run --/prefix ./airbnb/backend sequelize-cli",
   "start": "npm start --prefix ./airbnb/backend",
-  "build": "npm run --prefix ./airbnb/backend build",
+  "build": "npm run --prefix ./airbnb/backend build"
+  },
   "devDependencies": {
     "sequelize-cli": "^6.6.2"
   },
