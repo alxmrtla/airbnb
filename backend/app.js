@@ -16,13 +16,24 @@ const isProduction = environment === 'production';
 const csrfProtection = csrf({ cookie: true });
 const { ValidationError } = require('sequelize');
 const apiRouter = require('./routes/api');
+const bookingRoutes = require('./routes/api/bookings');
+const reviewsRoutes = require('./routes/api/reviews');
+const spotRoutes = require('./routes/api/spots');
+const spotImageRoutes = require('./routes/api/spotImages');
+const reviewImageRoutes = require('./routes/api/reviewImages');
 
 // Middleware setup
-app.use(express.json()); // Built-in middleware to parse JSON bodies
+app.use(express.json());
 app.use(cookieParser());
 app.use(morgan("dev")); // Logging middleware
 app.use('/api/session', sessionRouter);
 app.use('/api/users', usersRouter);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/reviews', reviewsRoutes);
+app.use('/api/spots', spotRoutes);
+app.use('/api/spot-images', spotImageRoutes);
+app.use('/api/review-images', reviewImageRoutes);
+
 
 // Security middleware setup
 app.use(csrfProtection);

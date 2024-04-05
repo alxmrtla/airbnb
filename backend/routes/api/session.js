@@ -47,8 +47,10 @@ router.post(
 
       const safeUser = {
         id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
         email: user.email,
-        username: user.username,
+        username: user.username
       };
 
       await setTokenCookie(res, safeUser);
@@ -66,13 +68,11 @@ router.delete(
       return res.json({ message: 'success' });
     }
   );
-//exports
-module.exports = router;
+
+
 
 // Restore session user
-router.get(
-    '/',
-    (req, res) => {
+router.get('/', (req, res) => {
       const { user } = req;
       if (user) {
         const safeUser = {
@@ -86,5 +86,5 @@ router.get(
       } else return res.json({ user: null });
     }
   );
-
-//MsnimTGL-wLmkZaYrQA7a7DqkdMg9g1WfZ8Q
+  //exports
+  module.exports = router;
