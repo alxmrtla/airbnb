@@ -86,5 +86,23 @@ router.get('/', (req, res) => {
       } else return res.json({ user: null });
     }
   );
-  //exports
+  router.get('/', restoreUser, (req, res) => {
+    if (req.user) {
+      const { id, firstName, lastName, email, username } = req.user;
+      res.json({
+        user: {
+          id,
+          firstName,
+          lastName,
+          email,
+          username
+        }
+      });
+    } else {
+      // No user is logged in
+      res.json({ user: null });
+    }
+  });
+
+
   module.exports = router;

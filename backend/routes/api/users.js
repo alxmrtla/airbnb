@@ -86,5 +86,27 @@ router.post("/", validateSignup, async (req, res) => {
     }
   }
 });
+const checkRole = (requiredRole) => {
+  return (req, res, next) => {
+    // Assuming `restoreUser` middleware has already authenticated the user
+    // and attached the user to `req.user`
+    if (!req.user) {
+      // If somehow this middleware runs before authentication, or if authentication failed
+      return res.status(401).json({
+        message: "Authentication required"
+      });
+    }
+
+    if (!req.user.roles.includes(requiredRole)) {
+      // User is authenticated but does not have the required role
+      return res.status(403).json({
+        message: "Forbidden"
+      });
+    }
+
+    // User has the required role, proceed to the next middleware/route handler
+    next();
+  };
+};
 
 module.exports = router;
