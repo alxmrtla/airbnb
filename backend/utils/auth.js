@@ -23,28 +23,25 @@ const restoreUser = async (req, res, next) => {
     }
 
     try {
-      const { id } = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findByPk(id);
+      const { data: userId } = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findByPk(userId);
       if (user) {
         req.user = user;
-        return next();
       }
-    } catch (e) {
-      return next();
-    }
+    } catch (error) {
 
-    return next();
+      res.clearCookie('token');
+
+    }
+    next();
   };
 
-  const requireAuth = (req, res, next) => {
-
+const requireAuth = (req, res, next) => {
     if (!req.user) {
-
       return res.status(401).json({
         message: "Authentication required"
       });
     }
-
     next();
   };
 
