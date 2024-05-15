@@ -1,8 +1,7 @@
 //backend/db/models/spot.js
 'use strict';
-const {
-  Model
-} = require('sequelize');
+const { Model } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class Spot extends Model {
     /**
@@ -11,15 +10,17 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // spot can have many bookings and reviews
-      Spot.associate = function(models) {
-        Spot.hasMany(models.Booking, { foreignKey: 'spotId' });
-        Spot.hasMany(models.Review, { foreignKey: 'spotId' });
-        Spot.hasMany(models.SpotImage, { foreignKey: 'spotId' });
-      };
+      // Spot can have many bookings, reviews, and images
+      Spot.hasMany(models.Booking, { foreignKey: 'spotId' });
+      Spot.hasMany(models.Review, { foreignKey: 'spotId' });
+      Spot.hasMany(models.SpotImage, { foreignKey: 'spotId' });
+      Spot.belongsTo(models.User, { foreignKey: 'ownerId', as: 'Owner' });
 
+      // Spot belongs to a user (owner)
+      Spot.belongsTo(models.User, { foreignKey: 'ownerId' });
     }
   }
+
   Spot.init({
     ownerId: DataTypes.INTEGER,
     address: DataTypes.STRING,
@@ -35,5 +36,6 @@ module.exports = (sequelize, DataTypes) => {
     sequelize,
     modelName: 'Spot',
   });
+
   return Spot;
 };

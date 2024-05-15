@@ -1,49 +1,62 @@
 // utils/auth.js
-const jwt = require("jsonwebtoken");
+const { User } = require('../db/models');
+const jwt = require('jsonwebtoken');
+const { jwtConfig } = require('../config');
+const { secret, expiresIn } = jwtConfig;
 
 const setTokenCookie = (res, user) => {
-  // Create the token
-  const token = jwt.sign({ data: user.id }, process.env.JWT_SECRET, {
-    expiresIn: parseInt(process.env.JWT_EXPIRES_IN, 10),
+  const token = jwt.sign(
+    { data: user.id },
+    secret,
+    { expiresIn: parseInt(expiresIn) } // 604800 seconds = 1 week
+  );
+
+  const isProduction = process.env.NODE_ENV === "production";
+
+  res.cookie('token', token, {
+    maxAge: expiresIn * 1000, // maxAge in milliseconds
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction && "Lax"
   });
 
-  // Set the token in a cookie
-  res.cookie("token", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    maxAge: parseInt(process.env.JWT_EXPIRES_IN, 10) * 1000,
-  });
+  return token;
 };
 
+const restoreUser = (req, res, next) => {
+  const { token } = req.cookies;
+  console.log('Token:', token);
+  if (!token) {
+    return next();
+  }
 
-const restoreUser = async (req, res, next) => {
-    const { token } = req.cookies;
-    if (!token) {
+  return jwt.verify(token, secret, null, async (err, jwtPayload) => {
+    if (err) {
+      res.clearCookie('token');
       return next();
     }
 
     try {
-      const { data: userId } = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findByPk(userId);
-      if (user) {
-        req.user = user;
-      }
-    } catch (error) {
-
+      req.user = await User.findByPk(jwtPayload.data);
+      console.log('User:', req.user);
+    } catch (e) {
       res.clearCookie('token');
-
+      return next();
     }
-    next();
-  };
 
-const requireAuth = (req, res, next) => {
-    if (!req.user) {
-      return res.status(401).json({
-        message: "Authentication required"
-      });
-    }
-    next();
-  };
+    if (!req.user) res.clearCookie('token');
 
+    return next();
+  });
+};
 
-module.exports = { restoreUser, setTokenCookie, requireAuth };
+const requireAuth = [
+  restoreUser,
+  function (req, res, next) {
+    if (req.user) return next();
+
+    res.status(401).json({ message: 'Authentication required' });
+  },
+];
+
+module.exports = { setTokenCookie, restoreUser, requireAuth };

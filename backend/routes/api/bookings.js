@@ -29,7 +29,9 @@ router.get("/spots/:spotId/bookings", requireAuth, async (req, res) => {
 
   res.status(200).json({ Bookings: bookings });
 });
+// GET /api/bookings/current - Get all bookings of the current user
 
+// GET /api/bookings/current - Get all bookings of the current user
 router.get("/current", requireAuth, async (req, res) => {
   const userId = req.user.id;
 
@@ -39,26 +41,24 @@ router.get("/current", requireAuth, async (req, res) => {
       include: [
         {
           model: Spot,
-          as: "Spot",
-          attributes: [
-            "id",
-            "ownerId",
-            "address",
-            "city",
-            "state",
-            "country",
-            "lat",
-            "lng",
-            "name",
-            "price",
-            "previewImage",
-          ],
+          attributes: ["id", "ownerId", "address", "city", "state", "country", "lat", "lng", "name", "price"],
         },
       ],
       order: [["createdAt", "DESC"]],
     });
 
-    res.status(200).json({ Bookings: bookings });
+    res.status(200).json({
+      Bookings: bookings.map((booking) => ({
+        id: booking.id,
+        spotId: booking.spotId,
+        userId: booking.userId,
+        startDate: booking.startDate,
+        endDate: booking.endDate,
+        createdAt: booking.createdAt,
+        updatedAt: booking.updatedAt,
+        Spot: booking.Spot,
+      })),
+    });
   } catch (error) {
     console.error("Error fetching user's bookings:", error);
     res.status(500).json({ message: "Internal server error" });

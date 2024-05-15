@@ -3,19 +3,21 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-
   "keywords": [],
   "author": "",
   "license": "ISC",
   "scripts": {
-  "install": "npm --prefix backend install backend",
-  "dev:backend": "npm install --prefix backend && npm start --prefix backend",
-  "sequelize": "npm run --prefix backend sequelize",
-  "sequelize-cli": "npm run --prefix backend sequelize-cli",
-  "start": "npm start --prefix backend",
-  "build": "npm run --prefix backend build"
+    "install": "npm --prefix backend install backend",
+    "dev:backend": "npm install --prefix backend && npm start --prefix backend",
+    "sequelize": "npm run --prefix backend sequelize",
+    "sequelize-cli": "npm run --prefix backend sequelize-cli",
+    "start": "npm start --prefix backend",
+    "build": "npm run --prefix backend build"
   },
   "devDependencies": {
     "sequelize-cli": "^6.6.2"
+  },
+  "dependencies": {
+    "sequelize": "^6.37.3"
   }
 }

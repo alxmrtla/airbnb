@@ -39,14 +39,16 @@ module.exports = (sequelize, DataTypes) => {
     }
   });
 
-  //user can have many bookings
   User.associate = (models) => {
+    // User can have many bookings
+    User.hasMany(models.Booking, { foreignKey: 'userId' });
 
-      User.hasMany(models.Booking, { foreignKey: 'userId' });
+    // User can have many reviews
+    User.hasMany(models.Review, { foreignKey: 'userId' });
 
+    // User can have many spots
+    User.hasMany(models.Spot, { foreignKey: 'ownerId' });
+  };
 
-  //user can have many reviews
-  User.hasMany(models.Review, {foreignKey: 'UserId'});
-};
   return User;
 };
