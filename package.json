@@ -11,7 +11,8 @@
     "dev:backend": "npm install --prefix backend && npm start --prefix backend",
     "sequelize": "npm run --prefix backend sequelize",
     "sequelize-cli": "npm run --prefix backend sequelize-cli",
-    "start": "npm start --prefix backend",
+    "migrate": "npx sequelize-cli db:migrate --env production",
+    "start": "npm run migrate && npm start --prefix backend",
     "build": "npm run --prefix backend build"
   },
   "devDependencies": {
