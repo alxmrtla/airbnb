@@ -1,5 +1,6 @@
 'use strict';
 const bcrypt = require('bcryptjs');
+const { User } = require('../models'); // Ensure that the path to your models is correct
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
@@ -51,7 +52,7 @@ module.exports = {
       }
     ];
 
-    await queryInterface.bulkInsert('Users', users, {
+    await User.bulkCreate(users, {
       updateOnDuplicate: ['email', 'firstName', 'lastName', 'hashedPassword', 'updatedAt']
     });
   },
