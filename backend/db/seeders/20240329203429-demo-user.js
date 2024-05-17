@@ -51,19 +51,9 @@ module.exports = {
       }
     ];
 
-    for (const user of users) {
-      const [foundUser, created] = await queryInterface.rawSelect('Users', {
-        where: {
-          username: user.username
-        }
-      }, ['id']);
-
-      if (!foundUser) {
-        await queryInterface.bulkInsert('Users', [user], {});
-      } else {
-        await queryInterface.bulkUpdate('Users', user, { username: user.username });
-      }
-    }
+    await queryInterface.bulkInsert('Users', users, {
+      updateOnDuplicate: ['email', 'firstName', 'lastName', 'hashedPassword', 'updatedAt']
+    });
   },
 
   down: async (queryInterface, Sequelize) => {
