@@ -2,9 +2,6 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    // Ensure the schema is created
-    await queryInterface.createSchema(process.env.SCHEMA).catch(() => {});
-
     await queryInterface.createTable('ReviewImages', {
       id: {
         allowNull: false,

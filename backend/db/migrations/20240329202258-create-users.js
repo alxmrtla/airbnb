@@ -2,17 +2,12 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    // Ensure the schema is created
-    await queryInterface.createSchema(process.env.SCHEMA).catch(() => {});
-
-    // Check if the table already exists
     const tableMeta = await queryInterface.describeTable({ tableName: 'Users', schema: process.env.SCHEMA }).catch(() => null);
     if (tableMeta) {
       console.log('Users table already exists, skipping creation.');
       return;
     }
 
-    // Create the table if it doesn't exist
     await queryInterface.createTable('Users', {
       id: {
         allowNull: false,
