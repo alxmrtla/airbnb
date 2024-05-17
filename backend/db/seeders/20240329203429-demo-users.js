@@ -13,12 +13,20 @@ module.exports = {
       {
         email: 'demo@user.io',
         username: 'DemoUser',
-        hashedPassword: bcrypt.hashSync('password')
+        firstName: 'Demo',
+        lastName: 'User',
+        hashedPassword: bcrypt.hashSync('password'),
+        createdAt: new Date(),
+        updatedAt: new Date()
       },
       {
         email: 'demosecond@user.io',
         username: 'SecondDemoUser',
-        hashedPassword: bcrypt.hashSync('password')
+        firstName: 'Second',
+        lastName: 'User',
+        hashedPassword: bcrypt.hashSync('password'),
+        createdAt: new Date(),
+        updatedAt: new Date()
       }
     ], {});
   },
