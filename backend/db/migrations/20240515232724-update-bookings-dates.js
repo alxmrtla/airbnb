@@ -2,24 +2,38 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.changeColumn('Bookings', 'startDate', {
-      type: Sequelize.DATEONLY,
-      allowNull: false,
-    });
-    await queryInterface.changeColumn('Bookings', 'endDate', {
-      type: Sequelize.DATEONLY,
-      allowNull: false,
-    });
+    await queryInterface.createSchema(process.env.SCHEMA, {}).catch(() => {});
+
+    await queryInterface.addColumn(
+      { tableName: 'Bookings', schema: process.env.SCHEMA },
+      'startDate',
+      {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+      }
+    );
+
+    await queryInterface.addColumn(
+      { tableName: 'Bookings', schema: process.env.SCHEMA },
+      'endDate',
+      {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+      }
+    );
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.changeColumn('Bookings', 'startDate', {
-      type: Sequelize.DATETIME,
-      allowNull: false,
-    });
-    await queryInterface.changeColumn('Bookings', 'endDate', {
-      type: Sequelize.DATETIME,
-      allowNull: false,
-    });
+    await queryInterface.removeColumn(
+      { tableName: 'Bookings', schema: process.env.SCHEMA },
+      'startDate'
+    );
+
+    await queryInterface.removeColumn(
+      { tableName: 'Bookings', schema: process.env.SCHEMA },
+      'endDate'
+    );
   }
 };

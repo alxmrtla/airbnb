@@ -1,17 +1,15 @@
-//20240329202258-create-users.js
 'use strict';
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    // Check if the table already exists
-    const tableMeta = await queryInterface.describeTable('Users').catch(() => null);
-    if (tableMeta) {
+    await queryInterface.createSchema(process.env.SCHEMA, {}).catch(() => {});
 
+    const tableMeta = await queryInterface.describeTable({ tableName: 'Users', schema: process.env.SCHEMA }).catch(() => null);
+    if (tableMeta) {
       console.log('Users table already exists, skipping creation.');
       return;
     }
 
-    // If table doesn't exist, create it
     await queryInterface.createTable('Users', {
       id: {
         allowNull: false,
@@ -51,10 +49,12 @@ module.exports = {
         type: Sequelize.DATE,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       }
+    }, {
+      schema: process.env.SCHEMA
     });
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('Users');
+    await queryInterface.dropTable('Users', { schema: process.env.SCHEMA });
   }
 };
