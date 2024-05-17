@@ -4,14 +4,22 @@ let options = {};
 if (process.env.NODE_ENV === 'production') {
   options.schema = process.env.SCHEMA;
 }
-options.tableName = 'ReviewImages';
+options.tableName = 'Spots';
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     return queryInterface.bulkInsert(options, [
       {
-        reviewId: 1,
-        url: 'https://example.com/review1.jpg',
+        ownerId: 1,
+        address: '123 Main St',
+        city: 'Los Angeles',
+        state: 'CA',
+        country: 'USA',
+        lat: 34.0522,
+        lng: -118.2437,
+        name: 'Cozy Cottage',
+        description: 'A cozy cottage in the heart of the city.',
+        price: 100,
         createdAt: new Date(),
         updatedAt: new Date()
       }
@@ -21,7 +29,7 @@ module.exports = {
   down: async (queryInterface, Sequelize) => {
     const Op = Sequelize.Op;
     return queryInterface.bulkDelete(options, {
-      reviewId: { [Op.eq]: 1 }
+      name: { [Op.in]: ['Cozy Cottage'] }
     }, {});
   }
 };

@@ -1,13 +1,12 @@
 'use strict';
 
+let options = {};
+if (process.env.NODE_ENV === 'production') {
+  options.schema = process.env.SCHEMA;
+}
+
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    const tableMeta = await queryInterface.describeTable({ tableName: 'Users', schema: process.env.SCHEMA }).catch(() => null);
-    if (tableMeta) {
-      console.log('Users table already exists, skipping creation.');
-      return;
-    }
-
     await queryInterface.createTable('Users', {
       id: {
         allowNull: false,
@@ -47,12 +46,10 @@ module.exports = {
         type: Sequelize.DATE,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       }
-    }, {
-      schema: process.env.SCHEMA
-    });
+    }, options);
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('Users', { schema: process.env.SCHEMA });
+    await queryInterface.dropTable('Users', options);
   }
 };

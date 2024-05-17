@@ -1,8 +1,14 @@
 'use strict';
 
+let options = {};
+if (process.env.NODE_ENV === 'production') {
+  options.schema = process.env.SCHEMA;
+}
+options.tableName = 'ReviewImages';
+
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('ReviewImages', {
+    await queryInterface.createTable(options.tableName, {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -15,7 +21,7 @@ module.exports = {
         references: {
           model: {
             tableName: 'Reviews',
-            schema: process.env.SCHEMA
+            schema: options.schema
           },
           key: 'id'
         },
@@ -35,12 +41,10 @@ module.exports = {
         type: Sequelize.DATE,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
       }
-    }, {
-      schema: process.env.SCHEMA
-    });
+    }, options);
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('ReviewImages', { schema: process.env.SCHEMA });
+    await queryInterface.dropTable(options);
   }
 };
