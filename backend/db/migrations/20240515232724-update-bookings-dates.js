@@ -4,36 +4,48 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createSchema(process.env.SCHEMA).catch(() => {});
 
-    await queryInterface.addColumn(
-      { tableName: 'Bookings', schema: process.env.SCHEMA },
-      'startDate',
-      {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-      }
-    );
+    const table = await queryInterface.describeTable({ tableName: 'Bookings', schema: process.env.SCHEMA });
 
-    await queryInterface.addColumn(
-      { tableName: 'Bookings', schema: process.env.SCHEMA },
-      'endDate',
-      {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-      }
-    );
+    if (!table.startDate) {
+      await queryInterface.addColumn(
+        { tableName: 'Bookings', schema: process.env.SCHEMA },
+        'startDate',
+        {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+        }
+      );
+    }
+
+    if (!table.endDate) {
+      await queryInterface.addColumn(
+        { tableName: 'Bookings', schema: process.env.SCHEMA },
+        'endDate',
+        {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+        }
+      );
+    }
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.removeColumn(
-      { tableName: 'Bookings', schema: process.env.SCHEMA },
-      'startDate'
-    );
+    const table = await queryInterface.describeTable({ tableName: 'Bookings', schema: process.env.SCHEMA });
 
-    await queryInterface.removeColumn(
-      { tableName: 'Bookings', schema: process.env.SCHEMA },
-      'endDate'
-    );
+    if (table.startDate) {
+      await queryInterface.removeColumn(
+        { tableName: 'Bookings', schema: process.env.SCHEMA },
+        'startDate'
+      );
+    }
+
+    if (table.endDate) {
+      await queryInterface.removeColumn(
+        { tableName: 'Bookings', schema: process.env.SCHEMA },
+        'endDate'
+      );
+    }
   }
 };
