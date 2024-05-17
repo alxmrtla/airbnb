@@ -2,7 +2,8 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createSchema(process.env.SCHEMA, {}).catch(() => {});
+    // Ensure the schema is created
+    await queryInterface.createSchema(process.env.SCHEMA).catch(() => {});
 
     await queryInterface.createTable('Spots', {
       id: {
@@ -15,7 +16,10 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
-          model: 'Users',
+          model: {
+            tableName: 'Users',
+            schema: process.env.SCHEMA
+          },
           key: 'id'
         },
         onDelete: 'CASCADE'

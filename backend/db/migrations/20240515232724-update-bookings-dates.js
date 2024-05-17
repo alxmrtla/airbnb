@@ -2,7 +2,7 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createSchema(process.env.SCHEMA, {}).catch(() => {});
+    await queryInterface.createSchema(process.env.SCHEMA).catch(() => {});
 
     await queryInterface.addColumn(
       { tableName: 'Bookings', schema: process.env.SCHEMA },
