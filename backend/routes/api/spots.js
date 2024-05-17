@@ -39,6 +39,85 @@ const validateReview = [
     .isInt({ min: 1, max: 5 })
     .withMessage("Stars must be an integer from 1 to 5"),
 ];
+// GET /api/spots - Get all spots with optional filtering
+router.get("/", async (req, res) => {
+  let {
+    page = 1,
+    size = 20,
+    minLat,
+    maxLat,
+    minLng,
+    maxLng,
+    minPrice,
+    maxPrice,
+  } = req.query;
+
+  page = parseInt(page);
+  size = parseInt(size);
+
+  const errors = {};
+  if (isNaN(page) || page < 1 || page > 10) errors.page = "Page must be between 1 and 10";
+  if (isNaN(size) || size < 1 || size > 20) errors.size = "Size must be between 1 and 20";
+  if (minLat && isNaN(parseFloat(minLat))) errors.minLat = "minLat must be a decimal";
+  if (maxLat && isNaN(parseFloat(maxLat))) errors.maxLat = "maxLat must be a decimal";
+  if (minLng && isNaN(parseFloat(minLng))) errors.minLng = "minLng must be a decimal";
+  if (maxLng && isNaN(parseFloat(maxLng))) errors.maxLng = "maxLng must be a decimal";
+  if (minPrice && (isNaN(parseFloat(minPrice)) || parseFloat(minPrice) < 0)) errors.minPrice = "minPrice must be a decimal and greater than or equal to 0";
+  if (maxPrice && (isNaN(parseFloat(maxPrice)) || parseFloat(maxPrice) < 0)) errors.maxPrice = "maxPrice must be a decimal and greater than or equal to 0";
+
+  if (Object.keys(errors).length > 0) {
+    return res.status(400).json({ message: "Bad Request", errors });
+  }
+
+  const whereConditions = {
+    ...(minLat && { lat: { [Op.gte]: parseFloat(minLat) } }),
+    ...(maxLat && { lat: { [Op.lte]: parseFloat(maxLat) } }),
+    ...(minLng && { lng: { [Op.gte]: parseFloat(minLng) } }),
+    ...(maxLng && { lng: { [Op.lte]: parseFloat(maxLng) } }),
+    ...(minPrice && { price: { [Op.gte]: parseFloat(minPrice) } }),
+    ...(maxPrice && { price: { [Op.lte]: parseFloat(maxPrice) } }),
+  };
+
+  try {
+    const spots = await Spot.findAndCountAll({
+      where: whereConditions,
+      include: [
+        {
+          model: Review,
+          attributes: [],  //  aggregate the stars
+        },
+        {
+          model: SpotImage,
+          attributes: [],
+          where: {
+            preview: true,
+          },
+          required: false,
+        },
+      ],
+      attributes: {
+        include: [
+          [sequelize.fn("AVG", sequelize.col("Reviews.stars")), "avgRating"],
+          [sequelize.col("SpotImages.url"), "previewImage"],
+        ],
+      },
+      group: ["Spot.id", "SpotImages.id"],
+      limit: size,
+      offset: (page - 1) * size,
+    });
+
+    res.status(200).json({
+      Spots: spots.rows,
+      page,
+      size,
+      total: spots.count.length,
+      totalPages: Math.ceil(spots.count.length / size),
+    });
+  } catch (error) {
+    console.error("Error fetching spots:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
 
 // GET /api/spots/current - Get all spots owned by the current user
 router.get("/current", requireAuth, async (req, res) => {
@@ -263,73 +342,51 @@ router.post("/:spotId/images", requireAuth, async (req, res) => {
   }
 });
 
-// POST /api/spots/:spotId/bookings - Create a new booking
-router.post(
-  "/:spotId/bookings",
-  requireAuth,
-  [
-    check("startDate", "startDate cannot be in the past").isAfter(
-      new Date().toISOString().split("T")[0]
-    ),
-    check("endDate", "endDate cannot be on or before startDate").custom(
-      (value, { req }) => value > req.body.startDate
-    ),
-  ],
-  async (req, res) => {
-    const { spotId } = req.params;
-    const { startDate, endDate } = req.body;
-    const userId = req.user.id;
 
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        message: "Bad Request",
-        errors: errors
-          .array()
-          .reduce((acc, err) => ({ ...acc, [err.param]: err.msg }), {}),
-      });
-    }
 
-    const spot = await Spot.findByPk(spotId);
-    if (!spot) {
+// GET /api/spots/:spotId/bookings - Get all bookings for a spot
+router.get("/:spotId/bookings", requireAuth, async (req, res) => {
+  const { spotId } = req.params;
+
+  try {
+    const spotExists = await Spot.findByPk(spotId);
+    if (!spotExists) {
       return res.status(404).json({ message: "Spot couldn't be found" });
     }
 
-    if (spot.ownerId === userId) {
-      return res.status(403).json({ message: "Cannot book your own spot" });
-    }
-
-    // Check for booking conflicts
-    const conflict = await Booking.findOne({
-      where: {
-        spotId,
-        [Op.or]: [
-          { startDate: { [Op.between]: [startDate, endDate] } },
-          { endDate: { [Op.between]: [startDate, endDate] } },
-        ],
-      },
-    });
-
-    if (conflict) {
-      return res.status(403).json({
-        message: "Sorry, this spot is already booked for the specified dates",
-        errors: {
-          startDate: "Start date conflicts with an existing booking",
-          endDate: "End date conflicts with an existing booking",
+    const bookings = await Booking.findAll({
+      where: { spotId },
+      include: [
+        {
+          model: User,
+          attributes: ["id", "firstName", "lastName"],
         },
-      });
-    }
-
-    const booking = await Booking.create({
-      spotId,
-      userId,
-      startDate,
-      endDate,
+        {
+          model: Spot,
+          attributes: [
+            "id",
+            "ownerId",
+            "address",
+            "city",
+            "state",
+            "country",
+            "lat",
+            "lng",
+            "name",
+            "price",
+          ],
+        },
+      ],
     });
 
-    res.status(200).json(booking);
+    res.status(200).json({ Bookings: bookings });
+  } catch (error) {
+    console.error("Error fetching bookings for spot:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
-);
+});
+
+
 
 // GET /api/spots/:spotId/reviews - Get all reviews for a spot
 router.get("/:spotId/reviews", async (req, res) => {
@@ -403,5 +460,77 @@ router.post('/:spotId/reviews', [requireAuth, validateReview], async (req, res) 
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
+// POST /api/spots/:spotId/bookings - Create a new booking
+router.post("/:spotId/bookings", requireAuth, [
+  check("startDate", "startDate cannot be in the past").isAfter(
+    new Date().toISOString().split("T")[0]
+  ),
+  check("endDate", "endDate cannot be on or before startDate").custom(
+    (value, { req }) => value > req.body.startDate
+  ),
+], async (req, res) => {
+  const { spotId } = req.params;
+  const { startDate, endDate } = req.body;
+  const userId = req.user.id;
+
+  console.log('Booking dates:', startDate, endDate); // Log dates for debugging
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      message: "Bad Request",
+      errors: errors
+        .array()
+        .reduce((acc, err) => ({ ...acc, [err.param]: err.msg }), {}),
+    });
+  }
+
+  const spot = await Spot.findByPk(spotId);
+  if (!spot) {
+    return res.status(404).json({ message: "Spot couldn't be found" });
+  }
+
+  if (spot.ownerId === userId) {
+    return res.status(403).json({ message: "Cannot book your own spot" });
+  }
+
+  const conflict = await Booking.findOne({
+    where: {
+      spotId,
+      [Op.or]: [
+        { startDate: { [Op.between]: [startDate, endDate] } },
+        { endDate: { [Op.between]: [startDate, endDate] } },
+      ],
+    },
+  });
+
+  if (conflict) {
+    return res.status(403).json({
+      message: "Sorry, this spot is already booked for the specified dates",
+      errors: {
+        startDate: "Start date conflicts with an existing booking",
+        endDate: "End date conflicts with an existing booking",
+      },
+    });
+  }
+
+  try {
+    const booking = await Booking.create({
+      spotId,
+      userId,
+      startDate,
+      endDate,
+    });
+
+    console.log('Booking created:', booking); // Log created booking for debugging
+
+    res.status(200).json(booking);
+  } catch (error) {
+    console.error("Error creating booking:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 
 module.exports = router;
