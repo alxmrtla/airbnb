@@ -1,28 +1,49 @@
 'use strict';
 
-let options = {};
-if (process.env.NODE_ENV === 'production') {
-  options.schema = process.env.SCHEMA;
-}
-options.tableName = 'Bookings';
-
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.addColumn(options, 'startDate', {
-      type: Sequelize.DATE,
-      allowNull: false,
-      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-    });
+    await queryInterface.createSchema(process.env.SCHEMA).catch(() => {});
 
-    await queryInterface.addColumn(options, 'endDate', {
-      type: Sequelize.DATE,
-      allowNull: false,
-      defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-    });
+    const table = { tableName: 'Bookings', schema: process.env.SCHEMA };
+
+    const tableDescription = await queryInterface.describeTable(table);
+
+    if (!tableDescription.startDate) {
+      await queryInterface.addColumn(
+        table,
+        'startDate',
+        {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+        }
+      );
+    }
+
+    if (!tableDescription.endDate) {
+      await queryInterface.addColumn(
+        table,
+        'endDate',
+        {
+          type: Sequelize.DATE,
+          allowNull: false,
+          defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+        }
+      );
+    }
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.removeColumn(options, 'startDate');
-    await queryInterface.removeColumn(options, 'endDate');
+    const table = { tableName: 'Bookings', schema: process.env.SCHEMA };
+
+    const tableDescription = await queryInterface.describeTable(table);
+
+    if (tableDescription.startDate) {
+      await queryInterface.removeColumn(table, 'startDate');
+    }
+
+    if (tableDescription.endDate) {
+      await queryInterface.removeColumn(table, 'endDate');
+    }
   }
 };
