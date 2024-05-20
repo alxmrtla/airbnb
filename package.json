@@ -1,18 +1,21 @@
 {
   "name": "airbnb_martynov",
   "version": "1.0.0",
-  "description": "",
+  "description": "Airbnb clone project",
   "main": "index.js",
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "scripts": {
-    "install": "npm --prefix backend install backend",
-    "dev:backend": "npm install --prefix backend && npm start --prefix backend",
-    "sequelize": "npm run --prefix backend sequelize",
-    "sequelize-cli": "npm run --prefix backend sequelize-cli",
-    "migrate": "npx sequelize-cli db:migrate --env production",
     "start": "npm run migrate && npm start --prefix backend",
-    "build": "npm run --prefix backend build"
+    "migrate": "npx sequelize-cli db:migrate --env production",
+    "install:backend": "npm install --prefix backend",
+    "build": "npm run install:backend && npm run build --prefix backend && npm run migrate --prefix backend && npm run seed --prefix backend",
+    "seed": "npx sequelize-cli db:seed:all --env production"
+  },
+  "author": "Your Name",
+  "license": "ISC",
+  "dependencies": {
+    "sequelize": "^6.37.3"
+  },
+  "devDependencies": {
+    "sequelize-cli": "^6.6.2"
   }
 }
