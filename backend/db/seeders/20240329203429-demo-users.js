@@ -1,39 +1,49 @@
 'use strict';
 
+let options = {};
+if (process.env.NODE_ENV === 'production') {
+  options.schema = process.env.SCHEMA;  // specify schema if in production
+}
+options.tableName = 'Users'; // Add this line to ensure table name is correctly specified
+
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createSchema(process.env.SCHEMA).catch(() => {});
-
-    const existingUser = await queryInterface.rawSelect(
-      { tableName: 'Users', schema: process.env.SCHEMA },
-      { where: { username: 'DemoUser' } },
-      ['id']
-    );
-
-    if (!existingUser) {
-      await queryInterface.bulkInsert(
-        { tableName: 'Users', schema: process.env.SCHEMA },
-        [
-          {
-            username: 'DemoUser',
-            email: 'demo@user.io',
-            firstName: 'Demo',
-            lastName: 'User',
-            hashedPassword: 'hashed-password',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-        ],
-        {}
-      );
-    }
+    console.log('Starting to insert demo users...');
+    await queryInterface.bulkInsert(options, [
+      {
+        username: 'DemoUser',
+        email: 'demo@user.io',
+        hashedPassword: 'password',
+        firstName: 'Demo',
+        lastName: 'User',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        username: 'FakeUser1',
+        email: 'fakeuser1@user.io',
+        hashedPassword: 'password',
+        firstName: 'Fake',
+        lastName: 'User1',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        username: 'FakeUser2',
+        email: 'fakeuser2@user.io',
+        hashedPassword: 'password',
+        firstName: 'Fake',
+        lastName: 'User2',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ], {});
+    console.log('Finished inserting demo users.');
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.bulkDelete(
-      { tableName: 'Users', schema: process.env.SCHEMA },
-      { username: 'DemoUser' },
-      {}
-    );
-  },
+    console.log('Starting to delete demo users...');
+    await queryInterface.bulkDelete(options, null, {});
+    console.log('Finished deleting demo users.');
+  }
 };

@@ -2,11 +2,12 @@
 
 let options = {};
 if (process.env.NODE_ENV === 'production') {
-  options.schema = process.env.SCHEMA;
+  options.schema = process.env.SCHEMA;  // specify schema if in production
 }
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
+    options.tableName = 'Users'; // specify table name
     await queryInterface.createTable('Users', {
       id: {
         allowNull: false,
@@ -50,6 +51,7 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
+    options.tableName = 'Users'; // specify table name
     await queryInterface.dropTable('Users', options);
   }
 };

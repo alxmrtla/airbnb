@@ -1,8 +1,9 @@
+
 'use strict';
 
 let options = {};
 if (process.env.NODE_ENV === 'production') {
-  options.schema = process.env.SCHEMA;
+  options.schema = process.env.SCHEMA;  // define your schema in options object
 }
 options.tableName = 'Spots';
 
@@ -11,25 +12,25 @@ module.exports = {
     return queryInterface.bulkInsert(options, [
       {
         ownerId: 1,
-        address: '123 Main St',
-        city: 'Los Angeles',
-        state: 'CA',
+        address: '123 Demo St',
+        city: 'Demo City',
+        state: 'DC',
         country: 'USA',
-        lat: 34.0522,
-        lng: -118.2437,
-        name: 'Cozy Cottage',
-        description: 'A cozy cottage in the heart of the city.',
-        price: 100,
+        lat: 37.7749,
+        lng: -122.4194,
+        name: 'Demo Spot',
+        description: 'This is a demo spot.',
+        price: 123.45,
         createdAt: new Date(),
         updatedAt: new Date()
-      }
+      },
     ], {});
   },
 
   down: async (queryInterface, Sequelize) => {
     const Op = Sequelize.Op;
     return queryInterface.bulkDelete(options, {
-      name: { [Op.in]: ['Cozy Cottage'] }
+      name: { [Op.in]: ['Demo Spot'] }
     }, {});
   }
 };

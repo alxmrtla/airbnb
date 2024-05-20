@@ -1,49 +1,42 @@
+// backend/db/migrations/20240515232724-update-bookings-dates.js
 'use strict';
 
+let options = {};
+if (process.env.NODE_ENV === 'production') {
+  options.schema = process.env.SCHEMA;  // define your schema in options object
+}
+options.tableName = "Bookings";
+
 module.exports = {
-  up: async (queryInterface, Sequelize) => {
-    await queryInterface.createSchema(process.env.SCHEMA).catch(() => {});
-
-    const table = { tableName: 'Bookings', schema: process.env.SCHEMA };
-
-    const tableDescription = await queryInterface.describeTable(table);
+  async up(queryInterface, Sequelize) {
+    const tableDescription = await queryInterface.describeTable(options);
 
     if (!tableDescription.startDate) {
-      await queryInterface.addColumn(
-        table,
-        'startDate',
-        {
-          type: Sequelize.DATE,
-          allowNull: false,
-          defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-        }
-      );
+      await queryInterface.addColumn(options, 'startDate', {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+      });
     }
 
     if (!tableDescription.endDate) {
-      await queryInterface.addColumn(
-        table,
-        'endDate',
-        {
-          type: Sequelize.DATE,
-          allowNull: false,
-          defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-        }
-      );
+      await queryInterface.addColumn(options, 'endDate', {
+        type: Sequelize.DATE,
+        allowNull: false,
+        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+      });
     }
   },
 
-  down: async (queryInterface, Sequelize) => {
-    const table = { tableName: 'Bookings', schema: process.env.SCHEMA };
-
-    const tableDescription = await queryInterface.describeTable(table);
+  async down(queryInterface, Sequelize) {
+    const tableDescription = await queryInterface.describeTable(options);
 
     if (tableDescription.startDate) {
-      await queryInterface.removeColumn(table, 'startDate');
+      await queryInterface.removeColumn(options, 'startDate');
     }
 
     if (tableDescription.endDate) {
-      await queryInterface.removeColumn(table, 'endDate');
+      await queryInterface.removeColumn(options, 'endDate');
     }
   }
 };
