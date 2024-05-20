@@ -15,3 +15,4 @@
     "start": "npm run migrate && npm start --prefix backend",
     "build": "npm run --prefix backend build"
   }
+}
