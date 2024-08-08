@@ -38,10 +38,8 @@ router.post(
     });
 
     if (!user || !bcrypt.compareSync(password, user.hashedPassword.toString())) {
-      const err = new Error('Login failed');
+      const err = new Error('Invalid credentials');
       err.status = 401;
-      err.title = 'Login failed';
-      err.errors = { credential: 'The provided credentials were invalid.' };
       return next(err);
     }
 
@@ -60,6 +58,51 @@ router.post(
     });
   }
 );
+
+// Log out
+router.delete(
+  '/',
+  (_req, res) => {
+    res.clearCookie('token');
+    return res.json({ message: 'success' });
+  }
+);
+
+// Restore session user
+router.get('/', restoreUser, (req, res) => {
+  if (req.user) {
+    const { id, firstName, lastName, email, username } = req.user;
+    res.json({
+      user: {
+        id,
+        firstName,
+        lastName,
+        email,
+        username
+      }
+    });
+  } else {
+    res.json({ user: null });
+  }
+});
+
+// Error-handling middleware
+router.use((err, req, res, next) => {
+  const statusCode = err.status || 500;
+
+
+  const errorResponse = {
+    message: err.message || 'Internal Server Error',
+  };
+
+  if (err.errors) {
+    errorResponse.errors = err.errors;
+  }
+
+  res.status(statusCode).json(errorResponse);
+});
+
+module.exports = router;
 
 // Log out
 router.delete(

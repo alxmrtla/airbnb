@@ -2,15 +2,20 @@ const config = require('./index');
 
 module.exports = {
   development: {
-    storage: config.dbFile,
-    dialect: "sqlite",
-    seederStorage: "sequelize",
+    storage: './db/dev.db',
+    dialect: 'sqlite',
+    seederStorage: 'sequelize',
     logQueryParameters: true,
     typeValidation: true
   },
+  test: {
+    storage: ':memory:',
+    dialect: 'sqlite',
+    seederStorage: 'sequelize'
+  },
   production: {
-    use_env_variable: 'DATABASE_URL',
-    dialect: 'postgres',
+    storage: './db/prod.db',
+    dialect: 'sqlite',
     seederStorage: 'sequelize',
     dialectOptions: {
       ssl: {

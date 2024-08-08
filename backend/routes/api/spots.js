@@ -41,6 +41,8 @@ const validateReview = [
 ];
 
 // GET /api/spots - Get all spots with optional filtering
+
+
 router.get("/", async (req, res) => {
   let {
     page = 1,
@@ -80,49 +82,60 @@ router.get("/", async (req, res) => {
   };
 
   try {
-    const spots = await Spot.findAndCountAll({
+    const spots = await Spot.findAll({
       where: whereConditions,
       include: [
         {
           model: Review,
-          attributes: [],  //  aggregate the stars
+          attributes: ["stars"],
         },
         {
           model: SpotImage,
-          attributes: [],
+          attributes: ["url"],
           where: {
             preview: true,
           },
           required: false,
         },
       ],
-      attributes: {
-        include: [
-          [sequelize.fn("AVG", sequelize.col("Reviews.stars")), "avgRating"],
-          [sequelize.col("SpotImages.url"), "previewImage"],
-        ],
-      },
-      group: ["Spot.id", "SpotImages.id"],
       limit: size,
       offset: (page - 1) * size,
     });
 
+    const spotData = spots.map((spot) => {
+      const spotJson = spot.toJSON();
+
+      // Calculate the average rating manually
+      const reviews = spot.Reviews || [];
+      const totalStars = reviews.reduce((acc, review) => acc + review.stars, 0);
+      const avgRating = reviews.length > 0 ? (totalStars / reviews.length).toFixed(1) : null;
+
+      // Handle preview image
+      const previewImage = spot.SpotImages.length > 0 ? spot.SpotImages[0].url : null;
+
+      return {
+        ...spotJson,
+        avgRating,
+        previewImage,
+      };
+    });
+
     res.status(200).json({
-      Spots: spots.rows.map(spot => ({
-        ...spot.toJSON(),
-        avgRating: parseFloat(spot.dataValues.avgRating).toFixed(1),
-        previewImage: spot.dataValues.previewImage,
-      })),
+      Spots: spotData,
       page,
       size,
-      total: spots.count.length,
-      totalPages: Math.ceil(spots.count.length / size),
+      total: spots.length,
+      totalPages: Math.ceil(spots.length / size),
     });
   } catch (error) {
     console.error("Error fetching spots:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
+module.exports = router;
+
+
 
 // GET /api/spots/current - Get all spots owned by the current user
 router.get("/current", requireAuth, async (req, res) => {
