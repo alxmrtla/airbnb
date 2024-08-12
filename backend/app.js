@@ -66,22 +66,27 @@ app.use((err, _req, _res, next) => {
     for (let error of err.errors) {
       errors[error.path] = error.message;
     }
-    err.title = 'Validation error';
+    err.message = 'Validation error';
     err.errors = errors;
+    err.status = 400; // Ensure the correct status code
   }
   next(err);
 });
 
+
 // Error formatter
 app.use((err, _req, res, _next) => {
   res.status(err.status || 500);
-  console.error(err);
-  res.json({
-    title: err.title || 'Server Error',
+
+  const response = {
     message: err.message,
-    errors: err.errors,
-    stack: isProduction ? null : err.stack
-  });
+  };
+
+  if (err.errors) {
+    response.errors = err.errors;
+  }
+  res.json(response);
 });
+
 
 module.exports = app;

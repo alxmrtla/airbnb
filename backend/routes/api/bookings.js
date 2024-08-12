@@ -29,7 +29,7 @@ router.get("/spots/:spotId/bookings", requireAuth, async (req, res) => {
 
   res.status(200).json({ Bookings: bookings });
 });
-// GET /api/bookings/current - Get all bookings of the current user
+
 
 // GET /api/bookings/current - Get all bookings of the current user
 router.get("/current", requireAuth, async (req, res) => {

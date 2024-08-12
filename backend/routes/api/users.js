@@ -1,112 +1,95 @@
-// backend/routes/api/users.js
-
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
 const { User } = require("../../db/models");
-const { setTokenCookie, requireAuth } = require("../../utils/auth");
+const { setTokenCookie } = require("../../utils/auth");
 const { check } = require("express-validator");
 const { handleValidationErrors } = require("../../utils/validation");
 
 const validateSignup = [
   check("email")
     .exists({ checkFalsy: true })
+    .withMessage("Email is required.")
     .isEmail()
     .withMessage("Please provide a valid email.")
-    .custom((value) => {
-      return User.findOne({ where: { email: value } }).then((user) => {
-        if (user) {
-          return Promise.reject("User with that email already exists");
-        }
-      });
+    .custom(async (value) => {
+      const user = await User.findOne({ where: { email: value } });
+      if (user) {
+        throw new Error("User with that email already exists");
+      }
     }),
   check("username")
     .exists({ checkFalsy: true })
+    .withMessage("Username is required.")
     .isLength({ min: 4 })
-    .withMessage("Please provide a username with at least 4 characters.")
-    .custom((value) => {
-      return User.findOne({ where: { username: value } }).then((user) => {
-        if (user) {
-          return Promise.reject("User with that username already exists");
-        }
-      });
+    .withMessage("Username must be at least 4 characters.")
+    .custom(async (value) => {
+      const user = await User.findOne({ where: { username: value } });
+      if (user) {
+        throw new Error("User with that username already exists");
+      }
     }),
   check("password")
     .exists({ checkFalsy: true })
+    .withMessage("Password is required.")
     .isLength({ min: 6 })
     .withMessage("Password must be 6 characters or more."),
   check("firstName")
     .exists({ checkFalsy: true })
-    .withMessage("Please provide a first name."),
+    .withMessage("First Name is required."),
   check("lastName")
     .exists({ checkFalsy: true })
-    .withMessage("Please provide a last name."),
+    .withMessage("Last Name is required."),
   handleValidationErrors,
 ];
 
 // POST /api/users - Register a new user
 router.post("/", validateSignup, async (req, res) => {
   const { email, password, username, firstName, lastName } = req.body;
+  const hashedPassword = bcrypt.hashSync(password);
 
-  try {
-    const hashedPassword = bcrypt.hashSync(password, 10); // 10 is the salt length
-    const user = await User.create({
-      email,
-      username,
-      hashedPassword,
-      firstName,
-      lastName,
-    });
-    const safeUser = {
-      id: user.id,
-      email: user.email,
-      username: user.username,
-      firstName: user.firstName,
-      lastName: user.lastName,
-    };
-    await setTokenCookie(res, user);
+  const userExists = await User.findOne({
+    where: {
+      username: username,
+    },
+  });
+  const emailExists = await User.findOne({
+    where: {
+      email: email,
+    },
+  });
 
-    return res.json(safeUser);
-  } catch (err) {
-    if (
-      err.name === "SequelizeValidationError" ||
-      err.name === "SequelizeUniqueConstraintError"
-    ) {
-      const errors = {};
-      err.errors.forEach((error) => {
-        errors[error.path] = error.message;
-      });
-
-      return res.status(400).json({
-        message: "Validation error",
-        errors,
-      });
-    } else {
-      next(err);
-    }
+  if (userExists || emailExists) {
+    const err = new Error("User already exists");
+    err.status = 500;
+    err.errors = {};
+    if (userExists)
+      err.errors.username = "User with that username already exists";
+    if (emailExists) err.errors.email = "User with that email already exists";
+    throw err;
   }
-});
-const checkRole = (requiredRole) => {
-  return (req, res, next) => {
-    // Assuming `restoreUser` middleware has already authenticated the user
-    // and attached the user to `req.user`
-    if (!req.user) {
-      // If somehow this middleware runs before authentication, or if authentication failed
-      return res.status(401).json({
-        message: "Authentication required"
-      });
-    }
 
-    if (!req.user.roles.includes(requiredRole)) {
-      // User is authenticated but does not have the required role
-      return res.status(403).json({
-        message: "Forbidden"
-      });
-    }
+  const user = await User.create({
+    email,
+    username,
+    firstName,
+    lastName,
+    hashedPassword,
+  });
 
-    // User has the required role, proceed to the next middleware/route handler
-    next();
+  const safeUser = {
+    id: user.id,
+    email: user.email,
+    username: user.username,
+    firstName: user.firstName,
+    lastName: user.lastName,
   };
-};
+
+  await setTokenCookie(res, safeUser);
+
+  res.json({
+    user: safeUser,
+  });
+});
 
 module.exports = router;
