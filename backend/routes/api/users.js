@@ -43,53 +43,41 @@ const validateSignup = [
   handleValidationErrors,
 ];
 
+
 // POST /api/users - Register a new user
 router.post("/", validateSignup, async (req, res) => {
   const { email, password, username, firstName, lastName } = req.body;
   const hashedPassword = bcrypt.hashSync(password);
 
-  const userExists = await User.findOne({
-    where: {
-      username: username,
-    },
-  });
-  const emailExists = await User.findOne({
-    where: {
-      email: email,
-    },
-  });
+  try {
+    const user = await User.create({
+      email,
+      username,
+      firstName,
+      lastName,
+      hashedPassword,
+    });
 
-  if (userExists || emailExists) {
-    const err = new Error("User already exists");
-    err.status = 500;
-    err.errors = {};
-    if (userExists)
-      err.errors.username = "User with that username already exists";
-    if (emailExists) err.errors.email = "User with that email already exists";
-    throw err;
+    const safeUser = {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    };
+
+    await setTokenCookie(res, safeUser);
+
+    return res.status(201).json({
+      user: safeUser,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "User registration failed.",
+      errors: err.errors || "Unexpected error occurred.",
+    });
   }
-
-  const user = await User.create({
-    email,
-    username,
-    firstName,
-    lastName,
-    hashedPassword,
-  });
-
-  const safeUser = {
-    id: user.id,
-    email: user.email,
-    username: user.username,
-    firstName: user.firstName,
-    lastName: user.lastName,
-  };
-
-  await setTokenCookie(res, safeUser);
-
-  res.json({
-    user: safeUser,
-  });
 });
+
 
 module.exports = router;
