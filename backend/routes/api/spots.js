@@ -46,10 +46,11 @@ const validateReview = [
 const formatValidationErrors = (errors) => {
   const formattedErrors = {};
   errors.array().forEach((error) => {
-    formattedErrors[error.param] = error.msg;
+    formattedErrors[error.path] = error.msg;
   });
   return formattedErrors;
 };
+
 
 // GET /api/spots - Get all spots with optional filtering
 router.get("/", async (req, res) => {
@@ -64,8 +65,11 @@ router.get("/", async (req, res) => {
     maxPrice,
   } = req.query;
 
-  page = parseInt(page);
-  size = parseInt(size);
+  page = parseInt(page) || 1;
+  size = parseInt(size) || 20;
+
+  if (page < 1) page = 1;
+  if (size < 1) size = 20;
 
   const errors = {};
   if (isNaN(page) || page < 1 || page > 10)
@@ -132,8 +136,9 @@ router.get("/", async (req, res) => {
       const reviews = spot.Reviews || [];
       const totalStars = reviews.reduce((acc, review) => acc + review.stars, 0);
       const avgRating = reviews.length > 0
-        ? (totalStars / reviews.length).toFixed(1)
-        : null;
+      ? parseFloat((totalStars / reviews.length).toFixed(1))
+      : null;
+
 
       // Handle preview image
       const previewImage = spot.SpotImages.length > 0
@@ -160,43 +165,63 @@ router.get("/", async (req, res) => {
   }
 });
 
+
 // GET /api/spots/current - Get all spots owned by the current user
-router.post("/", [requireAuth, validateSpot, handleValidationErrors], async (req, res) => {
-  const { address, city, state, country, lat, lng, name, description, price } = req.body;
+router.get("/current", requireAuth, async (req, res) => {
   const ownerId = req.user.id;
 
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      message: "Bad Request",
-      errors: errors.mapped(),
-    });
-  }
-
   try {
-    const newSpot = await Spot.create({
-      ownerId,
-      address,
-      city,
-      state,
-      country,
-      lat,
-      lng,
-      name,
-      description,
-      price,
+    const spots = await Spot.findAll({
+      where: { ownerId },
+      include: [
+        {
+          model: SpotImage,
+          attributes: ["url"],
+          where: {
+            preview: true,
+          },
+          required: false,
+        },
+        {
+          model: Review,
+          attributes: ["stars"],
+        },
+      ],
     });
 
-    res.status(201).json({
-      ...newSpot.toJSON(),
-      createdAt: newSpot.createdAt,
-      updatedAt: newSpot.updatedAt
+    if (!spots || spots.length === 0) {
+      return res.status(404).json({ message: "No spots found for the current user" });
+    }
+
+    const spotData = spots.map((spot) => {
+      const spotJson = spot.toJSON();
+
+      // Calculate the average rating manually
+      const reviews = spot.Reviews || [];
+      const totalStars = reviews.reduce((acc, review) => acc + review.stars, 0);
+      const avgRating = reviews.length > 0
+        ? parseFloat((totalStars / reviews.length).toFixed(1))
+        : null;
+
+      // Handle preview image
+      const previewImage = spot.SpotImages.length > 0
+        ? spot.SpotImages[0].url
+        : null;
+
+      return {
+        ...spotJson,
+        avgRating,
+        previewImage,
+      };
     });
+
+    res.status(200).json({ Spots: spotData });
   } catch (error) {
-    console.error("Error creating spot:", error);
+    console.error("Error fetching spots:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
 
 
 // GET /api/spots/:spotId - Get details of a spot by id
@@ -216,13 +241,19 @@ router.get('/:spotId', async (req, res) => {
       return res.status(404).json({ message: "Spot couldn't be found" });
     }
 
-    const numReviews = await Review.count({ where: { spotId } });
-    const avgStarRating = parseFloat((await Review.aggregate('stars', 'avg', { where: { spotId } })) || 0).toFixed(1);
+    // Calculate avgRating
+    const reviews = await Review.findAll({ where: { spotId } });
+    const totalStars = reviews.reduce((acc, review) => acc + review.stars, 0);
+    let avgRating = null;
+    if (reviews.length > 0) {
+      avgRating = totalStars / reviews.length;
+      avgRating = avgRating % 1 === 0 ? Math.round(avgRating) : parseFloat(avgRating.toFixed(1)); // Ensure it's a number
+    }
 
     res.status(200).json({
       ...spot.toJSON(),
-      numReviews,
-      avgStarRating,
+      numReviews: reviews.length,
+      avgRating,
       SpotImages: spot.SpotImages,
       Owner: spot.Owner
     });
@@ -444,10 +475,12 @@ router.post('/:spotId/reviews', [requireAuth, validateReview], async (req, res) 
   const userId = req.user.id;
 
   const errors = validationResult(req);
+
+
   if (!errors.isEmpty()) {
     return res.status(400).json({
       message: "Bad Request",
-      errors: formatValidationErrors(errors),
+      errors: formatValidationErrors(errors),  // Proper error formatting
     });
   }
 

@@ -1,10 +1,17 @@
 const express = require("express");
 const router = express.Router();
 const { requireAuth } = require("../../utils/auth");
-const { Review, User, Spot, ReviewImage } = require("../../db/models");
+const { Review, User, Spot, ReviewImage, SpotImage } = require("../../db/models");
 const { check, validationResult } = require('express-validator');
 
-// GET /api/reviews/current - Get all reviews by the current user
+const formatValidationErrors = (errors) => {
+  const formattedErrors = {};
+  errors.array().forEach((error) => {
+    formattedErrors[error.path] = error.msg;
+  });
+  return formattedErrors;
+};
+
 router.get("/current", requireAuth, async (req, res) => {
   const userId = req.user.id;
 
@@ -30,6 +37,14 @@ router.get("/current", requireAuth, async (req, res) => {
             "name",
             "price",
           ],
+          include: [
+            {
+              model: SpotImage,
+              attributes: ["url"],
+              where: { preview: true },
+              required: false // Allows for spots without preview images
+            }
+          ],
         },
         {
           model: ReviewImage,
@@ -38,7 +53,45 @@ router.get("/current", requireAuth, async (req, res) => {
       ],
     });
 
-    res.status(200).json({ Reviews: reviews });
+    // If no reviews are found, return an appropriate message
+    if (reviews.length === 0) {
+      return res.status(404).json({ message: "No reviews found for the current user" });
+    }
+
+    // Format the response to match the required structure
+    const formattedReviews = reviews.map((review) => {
+      const spot = review.Spot.toJSON();
+      const previewImage = spot.SpotImages && spot.SpotImages.length > 0
+        ? spot.SpotImages[0].url
+        : null;
+
+      return {
+        id: review.id,
+        userId: review.userId,
+        spotId: review.spotId,
+        review: review.review,
+        stars: review.stars,
+        createdAt: review.createdAt.toISOString().split("T")[0] + " " + review.createdAt.toISOString().split("T")[1].split(".")[0],
+        updatedAt: review.updatedAt.toISOString().split("T")[0] + " " + review.updatedAt.toISOString().split("T")[1].split(".")[0],
+        User: review.User,
+        Spot: {
+          id: spot.id,
+          ownerId: spot.ownerId,
+          address: spot.address,
+          city: spot.city,
+          state: spot.state,
+          country: spot.country,
+          lat: spot.lat,
+          lng: spot.lng,
+          name: spot.name,
+          price: spot.price,
+          previewImage // Include the preview image
+        },
+        ReviewImages: review.ReviewImages
+      };
+    });
+
+    res.status(200).json({ Reviews: formattedReviews });
   } catch (error) {
     console.error("Error fetching user's reviews:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -61,7 +114,16 @@ router.post("/:spotId/reviews", [requireAuth, validateReview], async (req, res) 
 
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ message: "Bad Request", errors: errors.array() });
+    // Map errors correctly to show the field name instead of 'undefined'
+    const mappedErrors = errors.array().reduce((acc, error) => {
+      acc[error.param] = error.msg;
+      return acc;
+    }, {});
+
+    return res.status(400).json({
+      message: "Bad Request",
+      errors: mappedErrors,
+    });
   }
 
   const spot = await Spot.findByPk(spotId);
@@ -134,10 +196,16 @@ router.put("/:reviewId", [requireAuth, validateReview], async (req, res) => {
   const { review, stars } = req.body;
   const userId = req.user.id;
 
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ message: "Bad Request", errors: errors.array().map((e) => e.msg) });
-  }
+
+ const errors = validationResult(req);
+
+
+ if (!errors.isEmpty()) {
+   return res.status(400).json({
+     message: "Bad Request",
+     errors: formatValidationErrors(errors)
+   });
+ }
 
   const existingReview = await Review.findByPk(reviewId);
   if (!existingReview) {
